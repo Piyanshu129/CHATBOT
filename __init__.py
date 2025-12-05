@@ -8,7 +8,7 @@ A conversational AI bot that uses:
 - Support for multiple LLM backends (Ollama, HuggingFace)
 """
 
-from .config import BotConfig
+from .config.settings import BotConfig
 from .interface import Chatbot
 
 __version__ = "1.0.0"

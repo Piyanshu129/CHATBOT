@@ -8,10 +8,17 @@ langchain>=0.1.0
 langchain-community>=0.0.20
 langchain-core>=0.1.23
 langchain-ollama>=0.1.0
+langchain-openai>=0.1.0
 
 # Vector Store & Embeddings
 chromadb>=0.4.0
 sentence-transformers>=2.2.0
+
+# BM25 for Lexical Search (Production Enhancement)
+rank-bm25>=0.2.2
+
+# Token Counting for Context Assembly
+tiktoken>=0.5.0
 
 # Utilities
 python-dotenv>=1.0.0

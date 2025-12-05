@@ -1,0 +1,47 @@
+MTRN_BT Bot Architecture & Workflow
+This document explains the architecture of the correspondence/MTRN_BT/bot codebase.
+
+📂 Directory Structure
+bot/ (Root)
+main.py: The entry point script. It sets up paths and calls the CLI.
+interface/: Handles user interaction.
+cli.py: Parses command-line arguments (like --backend vllm) and starts the chatbot.
+chatbot.py: The central orchestrator. It initializes all core components and manages the chat loop (input -> processing -> output).
+bot/core/ (The Brain)
+This folder contains the core logic for the RAG (Retrieval-Augmented Generation) pipeline.
+
+llm_models.py: Manages LLM connections. Supports Ollama, HuggingFace, and vLLM (including the custom client we just built).
+memory.py: Manages two types of memory:
+Short-term: Recent conversation history (kept in RAM).
+Long-term: Persistent vector database (ChromaDB) and keyword index (BM25).
+chains.py: Builds the LangChain pipelines that connect everything together.
+classifier.py: Analyzes user queries to decide if retrieval is needed (e.g., "Hi" doesn't need a database search).
+query_expander.py: Generates multiple variations of a user's question to find better search results.
+reranker.py: Uses a high-precision model (Cross-Encoder) to re-order retrieved documents, ensuring the most relevant ones are used.
+context_assembler.py: Smartly combines chat history and retrieved documents into a final prompt that fits within the model's context window.
+bot/config/
+settings.py: Central configuration file. Defines model names, API URLs, memory sizes, and other parameters.
+bot/utils/
+timing.py: Tools for measuring how long each step takes (TTFT, retrieval time, etc.).
+🔄 The Workflow (RAG Pipeline)
+When you send a message, here is the exact journey it takes:
+
+Input: You type a message in interface/chatbot.py.
+Classification (core/classifier.py):
+The bot decides: "Is this a casual greeting or a question needing facts?"
+If it's just "Hi", it skips retrieval.
+Query Expansion (core/query_expander.py):
+If retrieval is needed, it generates variations of your question to cast a wider net.
+Hybrid Retrieval (core/memory.py):
+Vector Search: Finds conceptually similar documents (ChromaDB).
+Keyword Search: Finds exact keyword matches (BM25).
+Fusion: Combines results from both methods.
+Reranking (core/reranker.py):
+A specialized model scores the retrieved documents and picks the top 3-5 most relevant ones.
+Context Assembly (core/context_assembler.py):
+Combines: System Prompt + Retrieved Docs + Short-term History + User Question.
+Generation (core/llm_models.py):
+The assembled prompt is sent to the LLM (vLLM/Ollama).
+The response is streamed back to you token by token.
+Memory Update:
+The interaction is saved to both short-term memory (for context in the next turn) and long-term memory (ChromaDB) for future reference.
